@@ -10,6 +10,8 @@ public class EnemyController : MonoBehaviour
        Non = -1,
        Stand,
        Walk,
+       LeftWalk,
+       RightWalk,
        Chase,
        Charge,
        ShortAttack,
@@ -59,6 +61,12 @@ public class EnemyController : MonoBehaviour
     private Animator animator;
     //標的のトランスフォーム
     [SerializeField] private Transform targetT;
+    //
+    private EnemyStateus este;
+    //
+    [SerializeField] GameObject muzzle;
+    //
+    private EnemyShootGun eshot;
 
     //
     public EnemyState CurrentEnemyState
@@ -72,11 +80,23 @@ public class EnemyController : MonoBehaviour
         transform = GetComponent<Transform>();
         cCon = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        este = GetComponent<EnemyStateus>();
+        eshot = muzzle.GetComponent<EnemyShootGun>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        //if(este.Health <= 0)
+        //{
+        //    if(cCon.isGrounded)
+        //    {
+        //        moveDirection = Vector3.zero;
+        //    }
+        //    moveDirection = new Vector3(0, 3, 0) * Time.deltaTime;
+        //    cCon.Move(moveDirection);
+        //    return;
+        //}
         if (targetT == null)
         {
             return;
@@ -116,7 +136,7 @@ public class EnemyController : MonoBehaviour
     private void CheckTargetRenge()
     {
         targetRenge = Vector3.Distance(targetT.position,transform.position);
-        Debug.Log("TargetRenge:" + targetRenge);
+        //Debug.Log("TargetRenge:" + targetRenge);
     }
 
     //
@@ -138,7 +158,6 @@ public class EnemyController : MonoBehaviour
                     else
                     {
                         CurrentEnemyState = EnemyState.Walk;
-                        motionTimer = walkChengeTime;
                     }
                 }
                 break;
@@ -148,21 +167,36 @@ public class EnemyController : MonoBehaviour
                     CurrentEnemyState = EnemyState.Stand;
                     return;
                 }
+                int r = Random.Range(0, 2);
+                if(r == 0)
+                {
+                    CurrentEnemyState = EnemyState.LeftWalk;
+                    motionTimer = walkChengeTime;
+                }
+                else
+                {
+                    CurrentEnemyState = EnemyState.RightWalk;
+                    motionTimer = walkChengeTime;
+                }
                 if (targetRenge >= chaceRange)
                 {
                     CurrentEnemyState = EnemyState.Chase;
                 }
-
+                break;
+            case EnemyState.LeftWalk:
+                CurrentEnemyState = EnemyState.Walk;
+                break;
+            case EnemyState.RightWalk:
+                CurrentEnemyState = EnemyState.Walk;
                 break;
             case EnemyState.Chase:
                 if(targetT == null)
                 {
                     CurrentEnemyState = EnemyState.Stand;
                 }
-                else if(targetRenge < chaceRange)
+                if(targetRenge < chaceRange)
                 {
-                    CurrentEnemyState = EnemyState.Walk;
-                    motionTimer = walkChengeTime;
+                    CurrentEnemyState = EnemyState.Stand;
                 }
                 break;
             case EnemyState.Charge:
@@ -189,28 +223,39 @@ public class EnemyController : MonoBehaviour
     //
     private void Move()
     {
-        Debug.Log("EnemyState:" + CurrentEnemyState);
         switch (CurrentEnemyState)
         {
             case EnemyState.Stand:
                 break;
             case EnemyState.Walk:
-                CheckNextPos();
-                cCon.Move(moveDirection);
+                targetRenge += Random.Range(-4.0f, 4.0f);
+                break;
+            case EnemyState.LeftWalk:
+                CheckNextPos(1);
+                break;
+            case EnemyState.RightWalk:
+                CheckNextPos(-1);
                 break;
             case EnemyState.Chase:
-                moveDirection = targetT.position - transform.position;
+                moveDirection = (targetT.position - transform.position).normalized;
                 moveDirection *= chaseSpeed * Time.deltaTime;
                 moveDirection.y = 0;
-                cCon.Move(moveDirection);
                 break;
             case EnemyState.Charge:
                 break;
             case EnemyState.ShortAttack:
+                Debug.Log("Punch");
                 break;
             case EnemyState.LongAttack:
+                eshot.Fire();
+                Debug.Log("Fire");
                 break;
         }
+        if (!cCon.isGrounded)
+        {
+            moveDirection.y += gravity * Time.deltaTime;
+        }
+        cCon.Move(moveDirection);
     }
 
     //
@@ -231,19 +276,15 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    //
-    private void CheckNextPos()
+    //移動先の計算
+    //引数：（回転方向 R=-1,L=1）
+    private void CheckNextPos(int lr)
     {
-        int dis = 1;
-        if(motionTimer <= 0)
-        {
-            dis = Random.Range(0, 3) - 1;
-            dis = dis == 0 ? 1 : dis;
-        }
         targetRad = Mathf.Atan2(transform.position.z - targetT.position.z, transform.position.x - targetT.position.x);
-        targetRad += moveRotPaSec * Mathf.Deg2Rad;
+        targetRad += lr * moveRotPaSec * Mathf.Deg2Rad;
         Vector3 worldVec = targetT.position + new Vector3(Mathf.Cos(targetRad), 0, Mathf.Sin(targetRad)) * targetRenge;
-        moveDirection = (worldVec - transform.position) * moveSpeed * Time.deltaTime;
+        moveDirection = (worldVec - transform.position).normalized;
+        moveDirection *= moveSpeed * Time.deltaTime;
         moveDirection.y = 0;
     }
 }

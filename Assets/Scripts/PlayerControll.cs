@@ -141,6 +141,6 @@ public class PlayerControll : MonoBehaviour
 
 	void DebugFunc()
 	{
-		Debug.Log(playerState);
+		//Debug.Log(playerState);
 	}
 }

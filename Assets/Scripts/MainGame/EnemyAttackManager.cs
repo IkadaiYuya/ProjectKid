@@ -15,7 +15,7 @@ public class EnemyAttackManager : MonoBehaviour {
 	void Start () {
         attackTimer = attackIntervalTime;
         EnemyGarageControll();
-        Debug.Log("EnemyGarageNum:" + enemyGarage.Count);
+        //Debug.Log("EnemyGarageNum:" + enemyGarage.Count);
 	}
 	
 	// Update is called once per frame
@@ -58,23 +58,5 @@ public class EnemyAttackManager : MonoBehaviour {
         {
             enemyGarage.Add(tmpEne[i]);
         }
-        //foreach(GameObject obj in UnityEngine.Object.FindObjectsOfType(typeof(GameObject)))
-        //{
-        //    if(obj.tag == "Enemy")
-        //    {
-        //        for(int i = enemyGarage.Count - 1; i >= 0;--i)
-        //        {
-        //            if(enemyGarage[i] == obj)
-        //            {
-        //                Debug.Log("Break");
-        //                break;
-        //            }
-        //            if(i == 0)
-        //            {
-        //                enemyGarage.Add(obj);
-        //            }
-        //        }
-        //    }
-        //}
     }
 }
